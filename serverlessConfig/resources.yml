@@ -1,0 +1,69 @@
+# the logical ID of this bucket is imporant.
+# above, we specified s3: uploadbucket as the event for the s3Uploaded function
+# so here, we must name this resource S3BucketUploadbucket because serverless uses
+# this convention: S3Bucket{Capitalized resource name}. The same idea applies
+# to the lambda permissions
+S3BucketUploadbucket:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: ${self:custom.uploadBucketName}
+    CorsConfiguration: # update the CORS configuration as needed
+      CorsRules:
+        - AllowedHeaders:
+            - "*"
+          AllowedMethods:
+            - "PUT"
+            - "POST"
+          AllowedOrigins:
+            - "*"
+S3UploadedLambdaPermissionUploadbucketS3:
+  Type: AWS::Lambda::Permission
+  Properties:
+    FunctionName:
+      Fn::GetAtt:
+        - S3UploadedLambdaFunction
+        - Arn
+    Principal: "s3.amazonaws.com"
+    Action: "lambda:invokeFunction"
+    SourceAccount:
+      Ref: AWS::AccountId
+    SourceArn: "arn:aws:s3:::${self:custom.uploadBucketName}"
+s3OutputBucket:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: ${self:custom.outputBucketName}
+    # add other properties as needed such as cors configuration,
+    # tags, logging configuration, etc. see:
+    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
+s3UploadedRole:
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: ${self:custom.s3UploadedRoleName}
+    AssumeRolePolicyDocument:
+      Version: '2012-10-17'
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - lambda.amazonaws.com
+          Action: sts:AssumeRole
+    Policies:
+      - ${self:custom.policies.getObjectUploadBucket}
+      - ${self:custom.policies.putObjectOutputBucket}
+      # - ${self:custom.policies.logAll}
+      # - ${self:custom.policies.snsPublish}
+s3SignatureRole:
+  Type: AWS::IAM::Role
+  Properties:
+    RoleName: ${self:custom.s3SignatureRoleName}
+    AssumeRolePolicyDocument:
+      Version: '2012-10-17'
+      Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - lambda.amazonaws.com
+          Action: sts:AssumeRole
+    Policies:
+      # add other policies as needed
+      - ${self:custom.policies.putObjectUploadBucket}

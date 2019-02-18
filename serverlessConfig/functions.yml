@@ -1,0 +1,39 @@
+s3SignatureGenerator:
+  timeout: ${self:custom.timeout}
+  memorySize: ${self:custom.memorySize}
+  handler: ${self:custom.signatureHandler}
+  role: s3SignatureRole
+  environment:
+    REGION: ${self:provider.region}
+    UPLOAD_BUCKET: ${self:custom.uploadBucketName}
+    URL_EXPIRE_SECONDS: ${self:custom.urlExpires}
+  events:
+    - http:
+        path: ${self:custom.signaturePath}
+        method: GET
+        ## use private: true if you want to restrict access to this function via an API key that
+        ## is checked for you automatically by API Gateway
+        # private: true
+        ## use cors true to allow requests made to this API by clients on a different domain
+        cors: true
+
+s3Uploaded:
+  timeout: ${self:custom.timeout}
+  memorySize: ${self:custom.memorySize}
+  handler: ${self:custom.uploadedHandler}
+  role: s3UploadedRole # must match the logical name of the IAM role resource, not the physical ID
+  environment:
+    # Environment variables that are set when your function is triggered.
+    # add, or remove these variables as needed
+    REGION: ${self:provider.region}
+    OUTPUT_BUCKET: ${self:custom.outputBucketName}
+    MAX_UPLOAD_SIZE: ${self:custom.maxUploadSize}
+  events:
+    # uploadbucket is the logical id used by cloudformation, not the
+    # actual bucket name.
+    - s3: uploadbucket
+  ## Uncomment the following if you want to use a DLQ in case lambda fails to process your upload
+  ## make sure you have a resource called LambdaDLQTopic (or change the name to whatever resource you are
+  ## using as your DLQ)
+  # onError:
+  #   Ref: LambdaDLQTopic

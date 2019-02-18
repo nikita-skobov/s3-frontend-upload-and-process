@@ -1,0 +1,46 @@
+logAll: # use this policy within your lambda function role(s) to enable cloudwatch logging
+  PolicyName: "${self:service}-logAll-policy"
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      - Effect: "Allow"
+        Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:PutLogEvents
+          - logs:DescribeLogStreams
+        Resource: "arn:aws:logs:*:*:*"
+snsPublish: # use this policy within your lambda function role(s) to enable DLQ publishing
+  PolicyName: "${self:service}-snsPublish-policy"
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      - Effect: "Allow"
+        Action:
+          - sns:Publish
+        Resource:
+          Ref: LambdaDLQTopic # make sure you have a resource with this logical name
+getObjectUploadBucket:
+  PolicyName: "${self:service}-getObjectUploadBucket-policy"
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      - Effect: Allow
+        Action: s3:GetObject
+        Resource: "arn:aws:s3:::${self:custom.uploadBucketName}/*"
+putObjectOutputBucket:
+  PolicyName: "${self:service}-putObjectOutputBucket-policy"
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      - Effect: Allow
+        Action: s3:PutObject
+        Resource: "arn:aws:s3:::${self:custom.outputBucketName}/*"
+putObjectUploadBucket:
+  PolicyName: "${self:service}-putObjectOutputBucket-policy"
+  PolicyDocument:
+    Version: '2012-10-17'
+    Statement:
+      - Effect: Allow
+        Action: s3:PutObject
+        Resource: "arn:aws:s3:::${self:custom.uploadBucketName}/*"

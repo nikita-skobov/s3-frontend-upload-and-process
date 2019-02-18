@@ -29,159 +29,22 @@ custom:
   urlExpires: ${opt:urlExpires, "120000"} # defaults to 2 minutes
 
   policies:
-    logAll: # use this policy within your lambda function role(s) to enable cloudwatch logging
-      PolicyName: "${self:service}-logAll-policy"
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: "Allow"
-            Action:
-              - logs:CreateLogGroup
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-              - logs:DescribeLogStreams
-            Resource: "arn:aws:logs:*:*:*"
-    snsPublish: # use this policy within your lambda function role(s) to enable DLQ publishing
-      PolicyName: "${self:service}-snsPublish-policy"
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: "Allow"
-            Action:
-              - sns:Publish
-            Resource:
-              Ref: LambdaDLQTopic # make sure you have a resource with this logical name
-    getObjectUploadBucket:
-      PolicyName: "${self:service}-getObjectUploadBucket-policy"
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Action: s3:GetObject
-            Resource: "arn:aws:s3:::${self:custom.uploadBucketName}/*"
-    putObjectOutputBucket:
-      PolicyName: "${self:service}-putObjectOutputBucket-policy"
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Action: s3:PutObject
-            Resource: "arn:aws:s3:::${self:custom.outputBucketName}/*"
-    putObjectUploadBucket:
-      PolicyName: "${self:service}-putObjectOutputBucket-policy"
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Action: s3:PutObject
-            Resource: "arn:aws:s3:::${self:custom.uploadBucketName}/*"
+    # use this policy within your lambda function role(s) to enable cloudwatch logging
+    logAll: ${file(./serverlessConfig/policies.yml):logAll}
+    # use this policy within your lambda function role(s) to enable DLQ publishing
+    snsPublish: ${file(./serverlessConfig/policies.yml):snsPublish}
+    getObjectUploadBucket: ${file(./serverlessConfig/policies.yml):getObjectUploadBucket}
+    putObjectOutputBucket: ${file(./serverlessConfig/policies.yml):putObjectOutputBucket}
+    putObjectUploadBucket: ${file(./serverlessConfig/policies.yml):putObjectUploadBucket}
+
 functions:
-  s3SignatureGenerator:
-    timeout: ${self:custom.timeout}
-    memorySize: ${self:custom.memorySize}
-    handler: ${self:custom.signatureHandler}
-    role: s3SignatureRole
-    environment:
-      REGION: ${self:provider.region}
-      UPLOAD_BUCKET: ${self:custom.uploadBucketName}
-      URL_EXPIRE_SECONDS: ${self:custom.urlExpires}
-    events:
-      - http:
-          path: ${self:custom.signaturePath}
-          method: GET
-          ## use private: true if you want to restrict access to this function via an API key that
-          ## is checked for you automatically by API Gateway
-          # private: true
-          ## use cors true to allow requests made to this API by clients on a different domain
-          cors: true
-  s3Uploaded:
-    timeout: ${self:custom.timeout}
-    memorySize: ${self:custom.memorySize}
-    handler: ${self:custom.uploadedHandler}
-    role: s3UploadedRole # must match the logical name of the IAM role resource, not the physical ID
-    environment:
-      # Environment variables that are set when your function is triggered.
-      # add, or remove these variables as needed
-      REGION: ${self:provider.region}
-      OUTPUT_BUCKET: ${self:custom.outputBucketName}
-      MAX_UPLOAD_SIZE: ${self:custom.maxUploadSize}
-    events:
-      # uploadbucket is the logical id used by cloudformation, not the
-      # actual bucket name.
-      - s3: uploadbucket
-    ## Uncomment the following if you want to use a DLQ in case lambda fails to process your upload
-    ## make sure you have a resource called LambdaDLQTopic (or change the name to whatever resource you are
-    ## using as your DLQ)
-    # onError:
-    #   Ref: LambdaDLQTopic
+  s3SignatureGenerator: ${file(./serverlessConfig/functions.yml):s3SignatureGenerator}
+  s3Uploaded: ${file(./serverlessConfig/functions.yml):s3Uploaded}
+
 resources:
   Resources:
-    # the logical ID of this bucket is imporant.
-    # above, we specified s3: uploadbucket as the event for the s3Uploaded function
-    # so here, we must name this resource S3BucketUploadbucket because serverless uses
-    # this convention: S3Bucket{Capitalized resource name}. The same idea applies
-    # to the lambda permissions
-    S3BucketUploadbucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:custom.uploadBucketName}
-        CorsConfiguration: # update the CORS configuration as needed
-          CorsRules:
-            - AllowedHeaders:
-                - "*"
-              AllowedMethods:
-                - "PUT"
-                - "POST"
-              AllowedOrigins:
-                - "*"
-    S3UploadedLambdaPermissionUploadbucketS3:
-      Type: AWS::Lambda::Permission
-      Properties:
-        FunctionName:
-          Fn::GetAtt:
-            - S3UploadedLambdaFunction
-            - Arn
-        Principal: "s3.amazonaws.com"
-        Action: "lambda:invokeFunction"
-        SourceAccount:
-          Ref: AWS::AccountId
-        SourceArn: "arn:aws:s3:::${self:custom.uploadBucketName}"
-    s3OutputBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:custom.outputBucketName}
-        # add other properties as needed such as cors configuration,
-        # tags, logging configuration, etc. see:
-        # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
-    s3UploadedRole:
-      Type: AWS::IAM::Role
-      Properties:
-        RoleName: ${self:custom.s3UploadedRoleName}
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - lambda.amazonaws.com
-              Action: sts:AssumeRole
-        Policies:
-          - ${self:custom.policies.getObjectUploadBucket}
-          - ${self:custom.policies.putObjectOutputBucket}
-          # - ${self:custom.policies.logAll}
-          # - ${self:custom.policies.snsPublish}
-    s3SignatureRole:
-      Type: AWS::IAM::Role
-      Properties:
-        RoleName: ${self:custom.s3SignatureRoleName}
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - lambda.amazonaws.com
-              Action: sts:AssumeRole
-        Policies:
-          # add other policies as needed
-          - ${self:custom.policies.putObjectUploadBucket}
+    S3BucketUploadbucket: ${file(./serverlessConfig/resources.yml):S3BucketUploadbucket}
+    S3UploadedLambdaPermissionUploadbucketS3: ${file(./serverlessConfig/resources.yml):S3UploadedLambdaPermissionUploadbucketS3}
+    s3OutputBucket: ${file(./serverlessConfig/resources.yml):s3OutputBucket}
+    s3UploadedRole: ${file(./serverlessConfig/resources.yml):s3UploadedRole}
+    s3SignatureRole: ${file(./serverlessConfig/resources.yml):s3SignatureRole}
