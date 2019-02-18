@@ -13,6 +13,7 @@ package:
     - node_modules/**
     - '!node_modules/has/**'
 custom:
+  # account: ${opt:account} # your 12 digit AWS account number
   timeout: ${opt:timeout, "40"}
   memorySize: ${opt:memorySize, "2560"}
   uploadPrefix: ${opt:uploadPrefix, "upload"}
@@ -105,10 +106,9 @@ functions:
       OUTPUT_BUCKET: ${self:custom.outputBucketName}
       MAX_UPLOAD_SIZE: ${self:custom.maxUploadSize}
     events:
-      - s3:
-          # here, the uploadBucket is created if it does not already exist
-          bucket: ${self:custom.uploadBucketName}
-          event: s3:ObjectCreated:*
+      # uploadbucket is the logical id used by cloudformation, not the
+      # actual bucket name.
+      - s3: uploadbucket
     ## Uncomment the following if you want to use a DLQ in case lambda fails to process your upload
     ## make sure you have a resource called LambdaDLQTopic (or change the name to whatever resource you are
     ## using as your DLQ)
@@ -116,6 +116,36 @@ functions:
     #   Ref: LambdaDLQTopic
 resources:
   Resources:
+    # the logical ID of this bucket is imporant.
+    # above, we specified s3: uploadbucket as the event for the s3Uploaded function
+    # so here, we must name this resource S3BucketUploadbucket because serverless uses
+    # this convention: S3Bucket{Capitalized resource name}. The same idea applies
+    # to the lambda permissions
+    S3BucketUploadbucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.uploadBucketName}
+        CorsConfiguration: # update the CORS configuration as needed
+          CorsRules:
+            - AllowedHeaders:
+                - "*"
+              AllowedMethods:
+                - "PUT"
+                - "POST"
+              AllowedOrigins:
+                - "*"
+    S3UploadedLambdaPermissionUploadbucketS3:
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName:
+          Fn::GetAtt:
+            - S3UploadedLambdaFunction
+            - Arn
+        Principal: "s3.amazonaws.com"
+        Action: "lambda:invokeFunction"
+        SourceAccount:
+          Ref: AWS::AccountId
+        SourceArn: "arn:aws:s3:::${self:custom.uploadBucketName}"
     s3OutputBucket:
       Type: AWS::S3::Bucket
       Properties:
