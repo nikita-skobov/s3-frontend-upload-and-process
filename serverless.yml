@@ -1,19 +1,22 @@
-service: ${opt:service, "S3uploader"}
+service: ${opt:service, "s3uploader"}
 provider:
   name: aws
   runtime: nodejs8.10
   stage: ${opt:stage, "staging"}
   region: ${opt:region, "us-east-1"}
+package:
+  exclude:
+    - node_modules/**
 custom:
-  timeout: ${opt:timeout, 40}
-  memorySize: ${opt:memorySize, 2560}
+  timeout: ${opt:timeout, "40"}
+  memorySize: ${opt:memorySize, "2560"}
   uploadPrefix: ${opt:uploadPrefix, "upload"}
   uploadBucketName: ${opt:uploadBucket, "${self:service}-${self:custom.uploadPrefix}-bucket"}
   outputPrefix: ${opt:outputPrefix, "output"}
   outputBucketName: ${opt:outputBucket, "${self:service}-${self:custom.outputPrefix}-bucket"}
-  maxUploadSize: ${opt:maxUploadSize, 30000000} # defaults to 30MB
+  maxUploadSize: ${opt:maxUploadSize, "30000000"} # defaults to 30MB
   s3UploadedRoleName: "${self:service}-${self:provider.stage}-s3Uploaded-role"
-  uploadedHandler: ${opt:uploadHandler, "handlers/uploadHandler"}
+  uploadedHandler: ${opt:uploadHandler, "handlers/upload.handler"}
 
   policies:
     logAll: # use this policy within your lambda function role(s) to enable cloudwatch logging
@@ -58,7 +61,7 @@ functions:
   s3Uploaded:
     timeout: ${self:custom.timeout}
     memorySize: ${self:custom.memorySize}
-    handler: ${self:custom.uploadHandler}
+    handler: ${self:custom.uploadedHandler}
     role: s3UploadedRole # must match the logical name of the IAM role resource, not the physical ID
     environment:
       # Environment variables that are set when your function is triggered.

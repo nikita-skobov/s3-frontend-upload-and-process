@@ -8,7 +8,7 @@ const s3 = new AWS.S3({
   signatureVersion: 'v4',
 })
 
-module.exports = async (event, context) => {
+module.exports.handler = async (event, context) => {
   const SUCCESS = {
     statusCode: 200,
   }
