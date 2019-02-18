@@ -6,7 +6,12 @@ provider:
   region: ${opt:region, "us-east-1"}
 package:
   exclude:
+    - LICENSE
+    - README.md
+    # the following is an example of how to exclude all node_modules except
+    # for the ones you want
     - node_modules/**
+    - '!node_modules/has/**'
 custom:
   timeout: ${opt:timeout, "40"}
   memorySize: ${opt:memorySize, "2560"}
