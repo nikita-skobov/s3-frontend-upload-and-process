@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <input id="signature-url" type="text">
+  <button id="submit">Submit</button>
+  <script>
+    const signatureUrl = document.getElementById('signature-url')
+    const submitButton = document.getElementById('submit')
+    // just some random object to use as the data
+    const data = {
+      jeff: 'hello',
+      steve: [
+        1,
+        2,
+        3,
+        100,
+        455,
+        90,
+      ],
+      ally: {
+        test: 'yes',
+        testAgain: 'no',
+        hello: 155555,
+      },
+      random: Math.random(),
+    }
+
+    function uploadSuccess(xhr) {
+      console.log('Successfully uploaded data')
+    }
+
+    function uploadError(xhr) {
+      console.error('Error uploading data: ')
+      console.error(xhr)
+    }
+    
+    function startUpload(url, successCallback, errorCallback) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const xhr = new XMLHttpRequest()
+      xhr.open('PUT', url, true)
+
+      xhr.onload = () => {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          successCallback(xhr)
+        } else {
+          errorCallback(xhr)
+        }
+      }
+
+      xhr.send(blob)
+    }
+
+    function requestSignature() {
+      const url = signatureUrl.value
+
+      fetch(url)
+        .then(resp => resp.json())
+        .then((data) => {
+          if (data.error) console.error(data.error)
+          else startUpload(data.url, uploadSuccess, uploadError)
+        })
+        .catch(err => console.error(err))
+    }
+
+    submitButton.addEventListener('click', requestSignature)
+  </script>
+</body>
+</html>
