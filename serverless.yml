@@ -14,7 +14,7 @@ package:
     - '!node_modules/has/**'
 custom:
   # account: ${opt:account} # your 12 digit AWS account number
-  timeout: ${opt:timeout, "40"}
+  timeout: ${opt:timeout, "30"}
   memorySize: ${opt:memorySize, "2560"}
   uploadPrefix: ${opt:uploadPrefix, "upload"}
   uploadBucketName: ${opt:uploadBucket, "${self:service}-${self:custom.uploadPrefix}-bucket"}
