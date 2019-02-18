@@ -1,0 +1,97 @@
+service: ${opt:service, "S3uploader"}
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: ${opt:stage, "staging"}
+  region: ${opt:region, "us-east-1"}
+custom:
+  timeout: ${opt:timeout, 40}
+  memorySize: ${opt:memorySize, 2560}
+  uploadPrefix: ${opt:uploadPrefix, "upload"}
+  uploadBucketName: ${opt:uploadBucket, "${self:service}-${self:custom.uploadPrefix}-bucket"}
+  outputPrefix: ${opt:outputPrefix, "output"}
+  outputBucketName: ${opt:outputBucket, "${self:service}-${self:custom.outputPrefix}-bucket"}
+  maxUploadSize: ${opt:maxUploadSize, 30000000} # defaults to 30MB
+  s3UploadedRoleName: "${self:service}-${self:provider.stage}-s3Uploaded-role"
+  uploadedHandler: ${opt:uploadHandler, "handlers/uploadHandler"}
+
+  policies:
+    logAll: # use this policy within your lambda function role(s) to enable cloudwatch logging
+      PolicyName: "${self:service}-logAll-policy"
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - logs:DescribeLogStreams
+            Resource: "arn:aws:logs:*:*:*"
+    snsPublish: # use this policy within your lambda function role(s) to enable DLQ publishing
+      PolicyName: "${self:service}-snsPublish-policy"
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - sns:Publish
+            Resource:
+              Ref: LambdaDLQTopic # make sure you have a resource with this logical name
+    getObjectUploadBucket:
+      PolicyName: "${self:service}-getObjectUploadBucket-policy"
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: s3:GetObject
+            Resource: "arn:aws:s3:::${self:custom.uploadBucketName}/*"
+    putObjectOutputBucket:
+      PolicyName: "${self:service}-putObjectOutputBucket-policy"
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: s3:PutObject
+            Resource: "arn:aws:s3:::${self:custom.outputBucketName}/*"
+functions:
+  s3Uploaded:
+    timeout: ${self:custom.timeout}
+    memorySize: ${self:custom.memorySize}
+    handler: ${self:custom.uploadHandler}
+    role: s3UploadedRole # must match the logical name of the IAM role resource, not the physical ID
+    environment:
+      # Environment variables that are set when your function is triggered.
+      # add, or remove these variables as needed
+      REGION: ${self:provider.region}
+      OUTPUT_BUCKET: ${self:custom.outputBucketName}
+      MAX_UPLOAD_SIZE: ${self:custom.maxUploadSize}
+    events:
+      - s3:
+          bucket: ${self:custom.uploadBucketName}
+          event: s3:ObjectCreated:*
+    ## Uncomment the following if you want to use a DLQ in case lambda fails to process your upload
+    ## make sure you have a resource called LambdaDLQTopic (or change the name to whatever resource you are
+    ## using as your DLQ)
+    # onError:
+    #   Ref: LambdaDLQTopic
+resources:
+  Resources:
+    # vpc: ${file(ec2-autoscaling.yml):vpc}
+    s3UploadedRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${self:custom.s3UploadedRoleName}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - ${self:custom.policies.getObjectUploadBucket}
+          - ${self:custom.policies.putObjectOutputBucket}
+          # - ${self:custom.policies.logAll}
+          # - ${self:custom.policies.snsPublish}
