@@ -21,7 +21,11 @@ custom:
   outputBucketName: ${opt:outputBucket, "${self:service}-${self:custom.outputPrefix}-bucket"}
   maxUploadSize: ${opt:maxUploadSize, "30000000"} # defaults to 30MB
   s3UploadedRoleName: "${self:service}-${self:provider.stage}-s3Uploaded-role"
+  s3SignatureRoleName: "${self:service}-${self:provider.stage}-s3Signature-role"
   uploadedHandler: ${opt:uploadHandler, "handlers/upload.handler"}
+  signatureHandler: ${opt:signatureHandler, "handlers/signature.handler"}
+  signaturePath: ${opt:signaturePath, "/issue/signature"}
+  urlExpires: ${opt:urlExpires, "120000"} # defaults to 2 minutes
 
   policies:
     logAll: # use this policy within your lambda function role(s) to enable cloudwatch logging
@@ -62,7 +66,33 @@ custom:
           - Effect: Allow
             Action: s3:PutObject
             Resource: "arn:aws:s3:::${self:custom.outputBucketName}/*"
+    putObjectUploadBucket:
+      PolicyName: "${self:service}-putObjectOutputBucket-policy"
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: s3:PutObject
+            Resource: "arn:aws:s3:::${self:custom.uploadBucketName}/*"
 functions:
+  s3SignatureGenerator:
+    timeout: ${self:custom.timeout}
+    memorySize: ${self:custom.memorySize}
+    handler: ${self:custom.signatureHandler}
+    role: s3SignatureRole
+    environment:
+      REGION: ${self:provider.region}
+      UPLOAD_BUCKET: ${self:custom.uploadBucketName}
+      URL_EXPIRE_SECONDS: ${self:custom.urlExpires}
+    events:
+      - http:
+          path: ${self:custom.signaturePath}
+          method: GET
+          ## use private: true if you want to restrict access to this function via an API key that
+          ## is checked for you automatically by API Gateway
+          # private: true
+          ## use cors true to allow requests made to this API by clients on a different domain
+          cors: true
   s3Uploaded:
     timeout: ${self:custom.timeout}
     memorySize: ${self:custom.memorySize}
@@ -110,3 +140,18 @@ resources:
           - ${self:custom.policies.putObjectOutputBucket}
           # - ${self:custom.policies.logAll}
           # - ${self:custom.policies.snsPublish}
+    s3SignatureRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${self:custom.s3SignatureRoleName}
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          # add other policies as needed
+          - ${self:custom.policies.putObjectUploadBucket}
