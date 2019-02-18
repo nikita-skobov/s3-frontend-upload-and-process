@@ -1,0 +1,40 @@
+{
+  "name": "s3-frontend-upload-and-process",
+  "version": "1.0.0",
+  "description": "A tool to create serverless configurations to allow users to upload to S3 directly from their browser, and be notified of their upload progress",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nikita-skobov/s3-frontend-upload-and-process.git"
+  },
+  "keywords": [
+    "aws",
+    "amazon",
+    "web",
+    "services",
+    "s3",
+    "lambda",
+    "upload",
+    "uploader",
+    "frontend",
+    "user",
+    "browser",
+    "websockets"
+  ],
+  "author": "Nikita Skobov",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^5.7.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jsx-a11y": "^6.1.2",
+    "eslint-plugin-react": "^7.11.1"
+  },
+  "bugs": {
+    "url": "https://github.com/nikita-skobov/s3-frontend-upload-and-process/issues"
+  },
+  "homepage": "https://github.com/nikita-skobov/s3-frontend-upload-and-process#readme"
+}
