@@ -25,6 +25,7 @@ custom:
   s3SignatureRoleName: "${self:service}-${self:provider.stage}-s3Signature-role"
   uploadedHandler: ${opt:uploadHandler, "handlers/upload.handler"}
   signatureHandler: ${opt:signatureHandler, "handlers/signature.handler"}
+  onconnectHandler: ${opt:onconnectHandler, "handlers/websocket.connect"}
   signaturePath: ${opt:signaturePath, "/issue/signature"}
   urlExpires: ${opt:urlExpires, "120000"} # defaults to 2 minutes
 
@@ -40,6 +41,7 @@ custom:
 functions:
   s3SignatureGenerator: ${file(./serverlessConfig/functions.yml):s3SignatureGenerator}
   s3Uploaded: ${file(./serverlessConfig/functions.yml):s3Uploaded}
+  onconnect: ${file(./serverlessConfig/functions.yml):onconnect}
 
 resources:
   Resources:
@@ -48,3 +50,47 @@ resources:
     s3OutputBucket: ${file(./serverlessConfig/resources.yml):s3OutputBucket}
     s3UploadedRole: ${file(./serverlessConfig/resources.yml):s3UploadedRole}
     s3SignatureRole: ${file(./serverlessConfig/resources.yml):s3SignatureRole}
+    OnConnectionPermission:
+      Type: AWS::Lambda::Permission
+      DependsOn:
+        - OnconnectLambdaFunction
+        - MyWebsocketApi
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName:
+          Ref: OnconnectLambdaFunction
+        Principal: apigateway.amazonaws.com
+    MyWebsocketApi:
+      Type: AWS::ApiGatewayV2::Api
+      Properties:
+        Name: myWebsocketApi
+        ProtocolType: WEBSOCKET
+        RouteSelectionExpression: "$request.body.action"
+    ConnectRoute:
+      Type: AWS::ApiGatewayV2::Route
+      Properties:
+        ApiId:
+          Ref: MyWebsocketApi
+        RouteKey: $connect
+        AuthorizationType: NONE
+        OperationName: ConnectRoute
+        Target:
+          Fn::Join:
+            - '/'
+            - - 'integrations'
+              - Ref: ConnectIntegration
+    ConnectIntegration:
+      Type: AWS::ApiGatewayV2::Integration
+      Properties:
+        ApiId:
+          Ref: MyWebsocketApi
+        Description: connect integration
+        IntegrationType: AWS_PROXY
+        IntegrationUri:
+          Fn::Join:
+            - ''
+            - - "arn:aws:apigateway:${self:provider.region}:lambda:path/2015-03-31/functions/"
+              - Fn::GetAtt:
+                - OnconnectLambdaFunction
+                - Arn
+              - "/invocations"

@@ -37,3 +37,9 @@ s3Uploaded:
   ## using as your DLQ)
   # onError:
   #   Ref: LambdaDLQTopic
+
+onconnect:
+  timeout: ${self:custom.timeout}
+  memorySize: ${self:custom.memorySize}
+  handler: ${self:custom.onconnectHandler}
+  
