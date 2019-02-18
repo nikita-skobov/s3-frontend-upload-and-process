@@ -76,6 +76,7 @@ functions:
       MAX_UPLOAD_SIZE: ${self:custom.maxUploadSize}
     events:
       - s3:
+          # here, the uploadBucket is created if it does not already exist
           bucket: ${self:custom.uploadBucketName}
           event: s3:ObjectCreated:*
     ## Uncomment the following if you want to use a DLQ in case lambda fails to process your upload
@@ -85,7 +86,13 @@ functions:
     #   Ref: LambdaDLQTopic
 resources:
   Resources:
-    # vpc: ${file(ec2-autoscaling.yml):vpc}
+    s3OutputBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.outputBucketName}
+        # add other properties as needed such as cors configuration,
+        # tags, logging configuration, etc. see:
+        # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
     s3UploadedRole:
       Type: AWS::IAM::Role
       Properties:
