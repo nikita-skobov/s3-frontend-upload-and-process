@@ -36,5 +36,8 @@
   "bugs": {
     "url": "https://github.com/nikita-skobov/s3-frontend-upload-and-process/issues"
   },
-  "homepage": "https://github.com/nikita-skobov/s3-frontend-upload-and-process#readme"
+  "homepage": "https://github.com/nikita-skobov/s3-frontend-upload-and-process#readme",
+  "dependencies": {
+    "uuid": "^3.3.2"
+  }
 }

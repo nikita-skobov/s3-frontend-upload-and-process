@@ -1,11 +1,16 @@
 // eslint-disable-next-line
 'use strict';
 
+const uuidv4 = require('uuid/v4')
 const AWS = require('aws-sdk')
 
 const s3 = new AWS.S3({
   region: process.env.REGION,
   signatureVersion: 'v4',
+})
+
+const ddb = new AWS.DynamoDB.DocumentClient({
+  region: process.env.REGION,
 })
 
 module.exports.handler = async (event, context) => {
@@ -25,15 +30,29 @@ module.exports.handler = async (event, context) => {
   }
 
   try {
-    // verify the request either using a JWT, cookie, HTTP body, etc
+    // TODO: verify the request either using a JWT, cookie, HTTP body, etc
+    
+    const code = uuidv4()
+    const currentTimeInSeconds = Math.floor(Date.now() / 1000)
+    const expiresIn = 30 // 30 seconds
+    const codeExpiration = currentTimeInSeconds + expiresIn
 
     const url = s3.getSignedUrl('putObject', {
       Bucket: process.env.UPLOAD_BUCKET,
       Expires: process.env.URL_EXPIRE_SECONDS,
-      Key: `uploads/${Math.random()}`, // change this to something specific to your application
+      // TODO: change this to something specific to your application
+      Key: `uploads/${code}`,
     })
 
-    body = { url }
+    await ddb.put({
+      TableName: process.env.TABLE_NAME,
+      Item: {
+        [process.env.PARTITION_KEY]: code,
+        codeExpiration,
+      },
+    }).promise()
+
+    body = { url, code }
     statusCode = 200
   } catch (e) {
     console.log(e)
