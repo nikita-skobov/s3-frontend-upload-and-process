@@ -8,6 +8,8 @@ functions:
       REGION: ${self:provider.region}
       UPLOAD_BUCKET: ${self:custom.uploadBucketName}
       URL_EXPIRE_SECONDS: ${self:custom.urlExpires}
+      TABLE_NAME: ${self:custom.dynamoTableName}
+      PARTITION_KEY: ${self:custom.dynamoPartitionKeyName}
     events:
       - http:
           path: ${self:custom.signaturePath}

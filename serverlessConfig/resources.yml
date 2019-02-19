@@ -119,8 +119,8 @@ Resources:
       TableName: ${self:custom.dynamoTableName}
       BillingMode: ${self:custom.dynamoBillingMode, "PAY_PER_REQUEST"}
       AttributeDefinitions:
-        AttributeName: ${self:custom.dynamoPartitionKeyName, "pk"}
-        AttributeType: ${self:custom.dynamoPartitionKeyType, "S"}
+        AttributeName: ${self:custom.dynamoPartitionKeyName}
+        AttributeType: ${self:custom.dynamoPartitionKeyType}
       KeySchema:
-        AttributeName: ${self:custom.dynamoPartitionKeyName, "pk"}
+        AttributeName: ${self:custom.dynamoPartitionKeyName}
         KeyType: "HASH"

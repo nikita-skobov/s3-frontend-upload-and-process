@@ -12,6 +12,7 @@ package:
     # for the ones you want
     - node_modules/**
     - '!node_modules/has/**'
+    - '!node_modules/uuid/**'
 custom:
   # account: ${opt:account} # your 12 digit AWS account number
   timeout: ${opt:timeout, "30"}
@@ -29,6 +30,8 @@ custom:
   signaturePath: ${opt:signaturePath, "/issue/signature"}
   urlExpires: ${opt:urlExpires, "120000"} # defaults to 2 minutes
   dynamoTableName: ${opt:dynamoTableName, "${self:service}-${self:provider.stage}-websocket-table"}
+  dynamoPartitionKeyName: ${opt:dynamoPartitionKeyName, "pk"}
+  dynamoPartitionKeyType: ${opt:dynamoPartitionKeyType, "S"}
 
   policies: ${file(./serverlessConfig/policies.yml):policies}
 
