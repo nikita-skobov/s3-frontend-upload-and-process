@@ -1,69 +1,126 @@
-# the logical ID of this bucket is imporant.
-# above, we specified s3: uploadbucket as the event for the s3Uploaded function
-# so here, we must name this resource S3BucketUploadbucket because serverless uses
-# this convention: S3Bucket{Capitalized resource name}. The same idea applies
-# to the lambda permissions
-S3BucketUploadbucket:
-  Type: AWS::S3::Bucket
-  Properties:
-    BucketName: ${self:custom.uploadBucketName}
-    CorsConfiguration: # update the CORS configuration as needed
-      CorsRules:
-        - AllowedHeaders:
-            - "*"
-          AllowedMethods:
-            - "PUT"
-            - "POST"
-          AllowedOrigins:
-            - "*"
-S3UploadedLambdaPermissionUploadbucketS3:
-  Type: AWS::Lambda::Permission
-  Properties:
-    FunctionName:
-      Fn::GetAtt:
-        - S3UploadedLambdaFunction
-        - Arn
-    Principal: "s3.amazonaws.com"
-    Action: "lambda:invokeFunction"
-    SourceAccount:
-      Ref: AWS::AccountId
-    SourceArn: "arn:aws:s3:::${self:custom.uploadBucketName}"
-s3OutputBucket:
-  Type: AWS::S3::Bucket
-  Properties:
-    BucketName: ${self:custom.outputBucketName}
-    # add other properties as needed such as cors configuration,
-    # tags, logging configuration, etc. see:
-    # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
-s3UploadedRole:
-  Type: AWS::IAM::Role
-  Properties:
-    RoleName: ${self:custom.s3UploadedRoleName}
-    AssumeRolePolicyDocument:
-      Version: '2012-10-17'
-      Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-              - lambda.amazonaws.com
-          Action: sts:AssumeRole
-    Policies:
-      - ${self:custom.policies.getObjectUploadBucket}
-      - ${self:custom.policies.putObjectOutputBucket}
-      # - ${self:custom.policies.logAll}
-      # - ${self:custom.policies.snsPublish}
-s3SignatureRole:
-  Type: AWS::IAM::Role
-  Properties:
-    RoleName: ${self:custom.s3SignatureRoleName}
-    AssumeRolePolicyDocument:
-      Version: '2012-10-17'
-      Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-              - lambda.amazonaws.com
-          Action: sts:AssumeRole
-    Policies:
-      # add other policies as needed
-      - ${self:custom.policies.putObjectUploadBucket}
+Resources:
+  # the logical ID of this bucket is imporant.
+  # above, we specified s3: uploadbucket as the event for the s3Uploaded function
+  # so here, we must name this resource S3BucketUploadbucket because serverless uses
+  # this convention: S3Bucket{Capitalized resource name}. The same idea applies
+  # to the lambda permissions
+  S3BucketUploadbucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${self:custom.uploadBucketName}
+      CorsConfiguration: # update the CORS configuration as needed
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - "PUT"
+              - "POST"
+            AllowedOrigins:
+              - "*"
+  S3UploadedLambdaPermissionUploadbucketS3:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt:
+          - S3UploadedLambdaFunction
+          - Arn
+      Principal: "s3.amazonaws.com"
+      Action: "lambda:invokeFunction"
+      SourceAccount:
+        Ref: AWS::AccountId
+      SourceArn: "arn:aws:s3:::${self:custom.uploadBucketName}"
+  s3OutputBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${self:custom.outputBucketName}
+      # add other properties as needed such as cors configuration,
+      # tags, logging configuration, etc. see:
+      # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
+  s3UploadedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ${self:custom.s3UploadedRoleName}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - ${self:custom.policies.getObjectUploadBucket}
+        - ${self:custom.policies.putObjectOutputBucket}
+        # - ${self:custom.policies.logAll}
+        # - ${self:custom.policies.snsPublish}
+  s3SignatureRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ${self:custom.s3SignatureRoleName}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        # add other policies as needed
+        - ${self:custom.policies.putObjectUploadBucket}
+        - ${self:custom.policies.putItemWebsocketTable}
+  OnConnectionPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - OnconnectLambdaFunction
+      - MyWebsocketApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Ref: OnconnectLambdaFunction
+      Principal: apigateway.amazonaws.com
+  MyWebsocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: myWebsocketApi
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "$request.body.action"
+  ConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId:
+        Ref: MyWebsocketApi
+      RouteKey: $connect
+      AuthorizationType: NONE
+      OperationName: ConnectRoute
+      Target:
+        Fn::Join:
+          - '/'
+          - - 'integrations'
+            - Ref: ConnectIntegration
+  ConnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId:
+        Ref: MyWebsocketApi
+      Description: connect integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Join:
+          - ''
+          - - "arn:aws:apigateway:${self:provider.region}:lambda:path/2015-03-31/functions/"
+            - Fn::GetAtt:
+              - OnconnectLambdaFunction
+              - Arn
+            - "/invocations"
+  WebsocketIdTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:custom.dynamoTableName}
+      BillingMode: ${self:custom.dynamoBillingMode, "PAY_PER_REQUEST"}
+      AttributeDefinitions:
+        AttributeName: ${self:custom.dynamoPartitionKeyName, "pk"}
+        AttributeType: ${self:custom.dynamoPartitionKeyType, "S"}
+      KeySchema:
+        AttributeName: ${self:custom.dynamoPartitionKeyName, "pk"}
+        KeyType: "HASH"
