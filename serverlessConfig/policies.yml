@@ -21,8 +21,8 @@ policies:
             - sns:Publish
           Resource:
             Ref: LambdaDLQTopic # make sure you have a resource with this logical name
-  putItemWebsocketTable:
-    PolicyName: "${self:service}-putItemWebsocketTable-policy"
+  putItemProgressTable:
+    PolicyName: "${self:service}-putItemProgressTable-policy"
     PolicyDocument:
       Version: '2012-10-17'
       Statement:
@@ -30,8 +30,8 @@ policies:
           Action: dynamodb:PutItem
           Resource: 
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.dynamoTableName}"
-  updateItemWebsocketTable:
-    PolicyName: "${self:service}-updateItemWebsocketTable-policy"
+  updateItemProgressTable:
+    PolicyName: "${self:service}-updateItemProgressTable-policy"
     PolicyDocument:
       Version: '2012-10-17'
       Statement:
@@ -39,8 +39,8 @@ policies:
           Action: dynamodb:UpdateItem
           Resource:
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.dynamoTableName}"
-  getItemWebsocketTable:
-    PolicyName: "${self:service}-getItemWebsocketTable-policy"
+  getItemProgressTable:
+    PolicyName: "${self:service}-getItemProgressTable-policy"
     PolicyDocument:
       Version: '2012-10-17'
       Statement:

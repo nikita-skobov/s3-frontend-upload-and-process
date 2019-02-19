@@ -53,10 +53,10 @@ Resources:
         - ${self:custom.policies.putObjectOutputBucket}
         # - ${self:custom.policies.logAll}
         # - ${self:custom.policies.snsPublish}
-  onconnectRole:
+  pollingRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: ${self:custom.onconnectRoleName}
+      RoleName: ${self:custom.pollingRoleName}
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -67,8 +67,8 @@ Resources:
             Action: sts:AssumeRole
       Policies:
         - ${self:custom.policies.logAll}
-        - ${self:custom.policies.getItemWebsocketTable}
-        - ${self:custom.policies.updateItemWebsocketTable}
+        - ${self:custom.policies.getItemProgressTable}
+        - ${self:custom.policies.updateItemProgressTable}
   s3SignatureRole:
     Type: AWS::IAM::Role
     Properties:
@@ -84,70 +84,8 @@ Resources:
       Policies:
         # add other policies as needed
         - ${self:custom.policies.putObjectUploadBucket}
-        - ${self:custom.policies.putItemWebsocketTable}
-  OnConnectionPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - OnconnectLambdaFunction
-      - MyWebsocketApi
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName:
-        Ref: OnconnectLambdaFunction
-      Principal: apigateway.amazonaws.com
-  MyWebsocketApi:
-    Type: AWS::ApiGatewayV2::Api
-    Properties:
-      Name: myWebsocketApi
-      ProtocolType: WEBSOCKET
-      RouteSelectionExpression: "$request.body.action"
-  ConnectRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId:
-        Ref: MyWebsocketApi
-      RouteKey: $connect
-      AuthorizationType: NONE
-      OperationName: ConnectRoute
-      Target:
-        Fn::Join:
-          - '/'
-          - - 'integrations'
-            - Ref: ConnectIntegration
-  ConnectIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId:
-        Ref: MyWebsocketApi
-      Description: connect integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Join:
-          - ''
-          - - "arn:aws:apigateway:${self:provider.region}:lambda:path/2015-03-31/functions/"
-            - Fn::GetAtt:
-              - OnconnectLambdaFunction
-              - Arn
-            - "/invocations"
-  MyWebsocketApiDeployment:
-    DependsOn:
-      - MyWebsocketApi
-      - ConnectRoute
-    Type: AWS::ApiGatewayV2::Deployment
-    Properties:
-      ApiId:
-        Ref: MyWebsocketApi
-  MyWebsocketApiStage:
-      DependsOn:
-        - MyWebsocketApiDeployment
-      Type: AWS::ApiGatewayV2::Stage
-      Properties:
-        ApiId:
-          Ref: MyWebsocketApi
-        StageName: ${self:provider.stage}
-        DeploymentId:
-          Ref: MyWebsocketApiDeployment
-  WebsocketIdTable:
+        - ${self:custom.policies.putItemProgressTable}
+  ProgressIdTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: ${self:custom.dynamoTableName}

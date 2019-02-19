@@ -41,11 +41,11 @@ functions:
     # onError:
     #   Ref: LambdaDLQTopic
 
-  onconnect:
+  polling:
     timeout: ${self:custom.timeout}
     memorySize: ${self:custom.memorySize}
-    handler: ${self:custom.onconnectHandler}
-    role: onconnectRole
+    handler: ${self:custom.pollingHandler}
+    role: pollingRole
     environment:
       REGION: ${self:provider.region}
       TABLE_NAME: ${self:custom.dynamoTableName}

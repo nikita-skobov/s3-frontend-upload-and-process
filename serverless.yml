@@ -24,13 +24,13 @@ custom:
   maxUploadSize: ${opt:maxUploadSize, "30000000"} # defaults to 30MB
   s3UploadedRoleName: "${self:service}-${self:provider.stage}-s3Uploaded-role"
   s3SignatureRoleName: "${self:service}-${self:provider.stage}-s3Signature-role"
-  onconnectRoleName: "${self:service}-${self:provider.stage}-onconnect-role"
+  pollingRoleName: "${self:service}-${self:provider.stage}-polling-role"
   uploadedHandler: ${opt:uploadHandler, "handlers/upload.handler"}
   signatureHandler: ${opt:signatureHandler, "handlers/signature.handler"}
-  onconnectHandler: ${opt:onconnectHandler, "handlers/websocket.connect"}
+  pollingHandler: ${opt:pollingHandler, "handlers/polling.handler"}
   signaturePath: ${opt:signaturePath, "/issue/signature"}
   urlExpires: ${opt:urlExpires, "120000"} # defaults to 2 minutes
-  dynamoTableName: ${opt:dynamoTableName, "${self:service}-${self:provider.stage}-websocket-table"}
+  dynamoTableName: ${opt:dynamoTableName, "${self:service}-${self:provider.stage}-progress-table"}
   dynamoPartitionKeyName: ${opt:dynamoPartitionKeyName, "pk"}
   dynamoPartitionKeyType: ${opt:dynamoPartitionKeyType, "S"}
 
