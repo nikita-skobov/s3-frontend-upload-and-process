@@ -113,14 +113,22 @@ Resources:
               - OnconnectLambdaFunction
               - Arn
             - "/invocations"
+  MyWebsocketApiDeployment:
+    DependsOn:
+      - MyWebsocketApi
+    Type: AWS::ApiGatewayV2::Deployment
+    Properties:
+      ApiId:
+        Ref: MyWebsocketApi
+      StageName: ${self:provider.stage}
   WebsocketIdTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: ${self:custom.dynamoTableName}
       BillingMode: ${self:custom.dynamoBillingMode, "PAY_PER_REQUEST"}
       AttributeDefinitions:
-        AttributeName: ${self:custom.dynamoPartitionKeyName}
-        AttributeType: ${self:custom.dynamoPartitionKeyType}
+        - AttributeName: ${self:custom.dynamoPartitionKeyName}
+          AttributeType: ${self:custom.dynamoPartitionKeyType}
       KeySchema:
-        AttributeName: ${self:custom.dynamoPartitionKeyName}
-        KeyType: "HASH"
+        - AttributeName: ${self:custom.dynamoPartitionKeyName}
+          KeyType: "HASH"
