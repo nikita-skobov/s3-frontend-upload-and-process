@@ -45,4 +45,9 @@ functions:
     timeout: ${self:custom.timeout}
     memorySize: ${self:custom.memorySize}
     handler: ${self:custom.onconnectHandler}
+    role: onconnectRole
+    environment:
+      REGION: ${self:provider.region}
+      TABLE_NAME: ${self:custom.dynamoTableName}
+      PARTITION_KEY: ${self:custom.dynamoPartitionKeyName}
   

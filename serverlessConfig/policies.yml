@@ -30,6 +30,24 @@ policies:
           Action: dynamodb:PutItem
           Resource: 
             - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.dynamoTableName}"
+  updateItemWebsocketTable:
+    PolicyName: "${self:service}-updateItemWebsocketTable-policy"
+    PolicyDocument:
+      Version: '2012-10-17'
+      Statement:
+        - Effect: Allow
+          Action: dynamodb:UpdateItem
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.dynamoTableName}"
+  getItemWebsocketTable:
+    PolicyName: "${self:service}-getItemWebsocketTable-policy"
+    PolicyDocument:
+      Version: '2012-10-17'
+      Statement:
+        - Effect: Allow
+          Action: dynamodb:GetItem
+          Resource: 
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.dynamoTableName}"
   getObjectUploadBucket:
     PolicyName: "${self:service}-getObjectUploadBucket-policy"
     PolicyDocument:

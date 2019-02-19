@@ -24,6 +24,7 @@ custom:
   maxUploadSize: ${opt:maxUploadSize, "30000000"} # defaults to 30MB
   s3UploadedRoleName: "${self:service}-${self:provider.stage}-s3Uploaded-role"
   s3SignatureRoleName: "${self:service}-${self:provider.stage}-s3Signature-role"
+  onconnectRoleName: "${self:service}-${self:provider.stage}-onconnect-role"
   uploadedHandler: ${opt:uploadHandler, "handlers/upload.handler"}
   signatureHandler: ${opt:signatureHandler, "handlers/signature.handler"}
   onconnectHandler: ${opt:onconnectHandler, "handlers/websocket.connect"}

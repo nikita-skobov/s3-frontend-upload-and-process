@@ -53,6 +53,22 @@ Resources:
         - ${self:custom.policies.putObjectOutputBucket}
         # - ${self:custom.policies.logAll}
         # - ${self:custom.policies.snsPublish}
+  onconnectRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ${self:custom.onconnectRoleName}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - ${self:custom.policies.logAll}
+        - ${self:custom.policies.getItemWebsocketTable}
+        - ${self:custom.policies.updateItemWebsocketTable}
   s3SignatureRole:
     Type: AWS::IAM::Role
     Properties:
@@ -116,11 +132,21 @@ Resources:
   MyWebsocketApiDeployment:
     DependsOn:
       - MyWebsocketApi
+      - ConnectRoute
     Type: AWS::ApiGatewayV2::Deployment
     Properties:
       ApiId:
         Ref: MyWebsocketApi
-      StageName: ${self:provider.stage}
+  MyWebsocketApiStage:
+      DependsOn:
+        - MyWebsocketApiDeployment
+      Type: AWS::ApiGatewayV2::Stage
+      Properties:
+        ApiId:
+          Ref: MyWebsocketApi
+        StageName: ${self:provider.stage}
+        DeploymentId:
+          Ref: MyWebsocketApiDeployment
   WebsocketIdTable:
     Type: AWS::DynamoDB::Table
     Properties:
