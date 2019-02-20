@@ -51,6 +51,7 @@ Resources:
       Policies:
         - ${self:custom.policies.getObjectUploadBucket}
         - ${self:custom.policies.putObjectOutputBucket}
+        - ${self:custom.policies.updateItemProgressTable}
         - ${self:custom.policies.logAll}
         # - ${self:custom.policies.snsPublish}
   pollingRole:
