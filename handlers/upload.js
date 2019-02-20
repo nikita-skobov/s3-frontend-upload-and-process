@@ -36,9 +36,16 @@ function updateStatus(key, desiredStatus) {
         },
       }).promise()
 
-      res()
+      return res()
     } catch (e) {
-      rej(e)
+      if (e.errorType && e.errorType === 'ConditionalCheckFailedException') {
+        // if it gets a conditional check error, that means its simply retrying a previous
+        // invocation. we should not prevent execution just because it is retrying an event
+        return res()
+      }
+
+      // otherwise if there was some kind of database/network error, then yes we want to reject
+      return rej(e)
     }
   })
 }
