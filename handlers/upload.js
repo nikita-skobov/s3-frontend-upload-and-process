@@ -3,8 +3,8 @@
 
 const AWS = require('aws-sdk')
 
-const Status = require('./models/status')
-const Errors = require('./models/errors')
+const Status = require('../models/status')
+const Errors = require('../models/errors')
 
 const s3 = new AWS.S3({
   region: process.env.REGION,

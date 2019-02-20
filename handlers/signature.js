@@ -4,7 +4,7 @@
 const uuidv4 = require('uuid/v4')
 const AWS = require('aws-sdk')
 
-const Status = require('./models/status')
+const Status = require('../models/status')
 
 const s3 = new AWS.S3({
   region: process.env.REGION,
