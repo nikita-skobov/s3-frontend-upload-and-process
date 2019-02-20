@@ -26,18 +26,15 @@ function updateStatus(key, desiredStatus) {
         Key: {
           [process.env.PARTITION_KEY]: key,
         },
-        UpdateExpression: 'add #a :x', // increment by attrb #a by :x
-        ConditionExpression: '#a = :y', // only increment if status = the upload signature status
-        ExpresstionAttributeNames: {
-          '#a': 'status',
-        },
+        UpdateExpression: 'set statusCode = statusCode + :x', // increment by attrb #a by :x
+        ConditionExpression: 'statusCode = :y', // only increment if status = the upload signature status
         ExpressionAttributeValues: {
           ':x': 1, // increment by 1
           // only increment status if it is currently at the previous step
           // this avoids incrementing twice in a case where this function gets triggered multiple times
           ':y': indexOfPreviousStatus,
         },
-      })
+      }).promise()
 
       res()
     } catch (e) {
@@ -75,10 +72,7 @@ module.exports.handler = async (event, context) => {
       Key: {
         [process.env.PARTITION_KEY]: key,
       },
-      UpdateExpression: 'set #a = :x',
-      ExpresstionAttributeNames: {
-        '#a': 'error',
-      },
+      UpdateExpression: 'set errorCode = :x',
       ExpressionAttributeValues: {
         ':x': errs.getIndex('Invalid upload size'),
       },

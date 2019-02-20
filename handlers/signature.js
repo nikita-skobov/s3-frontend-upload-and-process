@@ -53,8 +53,8 @@ module.exports.handler = async (event, context) => {
       Item: {
         [process.env.PARTITION_KEY]: code,
         codeExpiration,
-        status: stats.getIndex('Successfully created upload signature'),
-        error: -1,
+        statusCode: stats.getIndex('Successfully created upload signature'),
+        errorCode: -1,
       },
     }).promise()
 

@@ -51,7 +51,7 @@ Resources:
       Policies:
         - ${self:custom.policies.getObjectUploadBucket}
         - ${self:custom.policies.putObjectOutputBucket}
-        # - ${self:custom.policies.logAll}
+        - ${self:custom.policies.logAll}
         # - ${self:custom.policies.snsPublish}
   pollingRole:
     Type: AWS::IAM::Role
@@ -84,6 +84,7 @@ Resources:
       Policies:
         # add other policies as needed
         - ${self:custom.policies.putObjectUploadBucket}
+        - ${self:custom.policies.logAll}
         - ${self:custom.policies.putItemProgressTable}
   ProgressIdTable:
     Type: AWS::DynamoDB::Table
