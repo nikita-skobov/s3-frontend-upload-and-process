@@ -52,4 +52,13 @@ functions:
       REGION: ${self:provider.region}
       TABLE_NAME: ${self:custom.dynamoTableName}
       PARTITION_KEY: ${self:custom.dynamoPartitionKeyName}
+    events:
+      - http:
+          path: ${self:custom.pollingPath}
+          method: GET
+          ## use private: true if you want to restrict access to this function via an API key that
+          ## is checked for you automatically by API Gateway
+          # private: true
+          ## use cors true to allow requests made to this API by clients on a different domain
+          cors: true
   

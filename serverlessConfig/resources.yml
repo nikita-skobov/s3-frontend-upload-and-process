@@ -69,7 +69,6 @@ Resources:
       Policies:
         - ${self:custom.policies.logAll}
         - ${self:custom.policies.getItemProgressTable}
-        - ${self:custom.policies.updateItemProgressTable}
   s3SignatureRole:
     Type: AWS::IAM::Role
     Properties:

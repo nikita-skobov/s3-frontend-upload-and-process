@@ -28,6 +28,7 @@ custom:
   uploadedHandler: ${opt:uploadHandler, "handlers/upload.handler"}
   signatureHandler: ${opt:signatureHandler, "handlers/signature.handler"}
   pollingHandler: ${opt:pollingHandler, "handlers/polling.handler"}
+  pollingPath: ${opt:pollingPath, "/poll"}
   signaturePath: ${opt:signaturePath, "/issue/signature"}
   urlExpires: ${opt:urlExpires, "120000"} # defaults to 2 minutes
   dynamoTableName: ${opt:dynamoTableName, "${self:service}-${self:provider.stage}-progress-table"}
