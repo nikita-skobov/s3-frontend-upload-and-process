@@ -31,6 +31,8 @@ functions:
       REGION: ${self:provider.region}
       OUTPUT_BUCKET: ${self:custom.outputBucketName}
       MAX_UPLOAD_SIZE: ${self:custom.maxUploadSize}
+      TABLE_NAME: ${self:custom.dynamoTableName}
+      PARTITION_KEY: ${self:custom.dynamoPartitionKeyName}
     events:
       # uploadbucket is the logical id used by cloudformation, not the
       # actual bucket name.

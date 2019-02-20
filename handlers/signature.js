@@ -4,6 +4,8 @@
 const uuidv4 = require('uuid/v4')
 const AWS = require('aws-sdk')
 
+const Status = require('./models/status')
+
 const s3 = new AWS.S3({
   region: process.env.REGION,
   signatureVersion: 'v4',
@@ -30,25 +32,29 @@ module.exports.handler = async (event, context) => {
   }
 
   try {
-    // TODO: verify the request either using a JWT, cookie, HTTP body, etc
+    // TODO: verify the request either using a JWT, cookie, body, etc
     
     const code = uuidv4()
     const currentTimeInSeconds = Math.floor(Date.now() / 1000)
-    const expiresIn = 30 // 30 seconds
+    const expiresIn = 60 * 1 // 1 minute
     const codeExpiration = currentTimeInSeconds + expiresIn
 
     const url = s3.getSignedUrl('putObject', {
       Bucket: process.env.UPLOAD_BUCKET,
       Expires: process.env.URL_EXPIRE_SECONDS,
       // TODO: change this to something specific to your application
-      Key: `uploads/${code}`,
+      Key: code,
     })
+
+    const stats = Status()
 
     await ddb.put({
       TableName: process.env.TABLE_NAME,
       Item: {
         [process.env.PARTITION_KEY]: code,
         codeExpiration,
+        status: stats.getIndex('Successfully created upload signature'),
+        error: -1,
       },
     }).promise()
 
