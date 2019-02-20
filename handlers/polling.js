@@ -59,9 +59,9 @@ module.exports.handler = async (event, context) => {
       throw invalidCodeErr
     }
 
-    const { statusCode } = data.Item
+    const sc = data.Item.statusCode
 
-    body = { status: stats.getStep(statusCode) }
+    body = { status: stats.getStep(sc) }
     statusCode = 200
   } catch (e) {
     console.log(e)
