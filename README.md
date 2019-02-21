@@ -35,20 +35,6 @@ npm install
 sls deploy # this assumes your credentials are stored in a way that serverless knows where to find them
 ```
 
-Note that if you change your handler function names, they must also be changed within your serverless configuration. For example:
-In serverless.yml it states:
-```yml
-custom:
-  uploadedHandler: ${opt:uploadHandler,           "handlers/upload.handler"}
-  #                ^ customizable handler path    ^ default handler path
-```
-
-So if you specify the uploadHandler option as:
-```sh
-sls deploy --uploadHandler myUploadFile.myFunction
-```
-Then you must have a file called `myUploadFile.js` in the root of this directory, and it must have a module-exported function called `myFunction`
-
 ## Testing
 
 After a few minutes, your functions, and resources will be deployed to your AWS account. I have provided a test webpage that you can open locally, and test the functionality of your infrastructure.
@@ -98,6 +84,44 @@ https://aigi6g1nqg.execute-api.us-east-1.amazonaws.com/staging
 13. POLLING STATUS: Successfully entered data into database
 14. DONE!
 ```
+
+## Things to keep in mind
+
+### 1.
+Note that if you change your handler function names, they must also be changed within your serverless configuration. For example:
+In serverless.yml it states:
+```yml
+custom:
+  uploadedHandler: ${opt:uploadHandler,           "handlers/upload.handler"}
+  #                ^ customizable handler path    ^ default handler path
+```
+
+So if you specify the uploadHandler option as:
+```sh
+sls deploy --uploadHandler myUploadFile.myFunction
+```
+Then you must have a file called `myUploadFile.js` in the root of this directory, and it must have a module-exported function called `myFunction`
+
+### 2.
+This repository uses the serverless framework which is slightly abstracted out from AWS CloudFormation. As such, it uses its own conventions for some resources such as function names.
+An example is if you have a basic serverless configuration like:
+```yml
+service: myservice
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: staging
+  region: ${opt:region, "us-east-1"}
+functions:
+  someFunction:
+    handler: myfile.someHandler
+    events:
+      - http:
+          path: /somepath/somefunction
+          method: GET
+```
+
+Then serverless will give your function a logical ID of `SomeFunctionLambdaFunction`. This can then be used within cloudformation to reference that resource, whereas referencing `someFunction` will not work. An example of this, and some more explanation can be found at the top of the serverlessConfig/resources.yml file
 
 ## Issues/Suggestions?
 
