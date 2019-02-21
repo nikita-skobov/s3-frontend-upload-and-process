@@ -11,7 +11,6 @@ package:
     # the following is an example of how to exclude all node_modules except
     # for the ones you want
     - node_modules/**
-    - '!node_modules/has/**'
     - '!node_modules/uuid/**'
 custom:
   # account: ${opt:account} # your 12 digit AWS account number

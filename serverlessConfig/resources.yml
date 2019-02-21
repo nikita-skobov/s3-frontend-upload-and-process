@@ -1,6 +1,6 @@
 Resources:
   # the logical ID of this bucket is imporant.
-  # above, we specified s3: uploadbucket as the event for the s3Uploaded function
+  # in the functions.yml file, we specified s3: uploadbucket as the event for the s3Uploaded function
   # so here, we must name this resource S3BucketUploadbucket because serverless uses
   # this convention: S3Bucket{Capitalized resource name}. The same idea applies
   # to the lambda permissions
@@ -17,6 +17,12 @@ Resources:
               - "POST"
             AllowedOrigins:
               - "*"
+
+  # once again, this resource name is important.
+  # the S3UploadedLambdaPermission corresponds to the serverless naming convention of:
+  # {Capitalized name of function}LambdaPermission{Capitalized logical name of s3 bucket}S3
+  # if you change the function name, or the logical name of the S3 bucket, this resource must
+  # also be updated accordingly
   S3UploadedLambdaPermissionUploadbucketS3:
     Type: AWS::Lambda::Permission
     Properties:
@@ -29,6 +35,7 @@ Resources:
       SourceAccount:
         Ref: AWS::AccountId
       SourceArn: "arn:aws:s3:::${self:custom.uploadBucketName}"
+
   s3OutputBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -36,6 +43,7 @@ Resources:
       # add other properties as needed such as cors configuration,
       # tags, logging configuration, etc. see:
       # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
+
   s3UploadedRole:
     Type: AWS::IAM::Role
     Properties:
@@ -54,6 +62,7 @@ Resources:
         - ${self:custom.policies.updateItemProgressTable}
         - ${self:custom.policies.logAll}
         # - ${self:custom.policies.snsPublish}
+
   pollingRole:
     Type: AWS::IAM::Role
     Properties:
@@ -69,6 +78,7 @@ Resources:
       Policies:
         - ${self:custom.policies.logAll}
         - ${self:custom.policies.getItemProgressTable}
+
   s3SignatureRole:
     Type: AWS::IAM::Role
     Properties:
@@ -86,6 +96,7 @@ Resources:
         - ${self:custom.policies.putObjectUploadBucket}
         - ${self:custom.policies.logAll}
         - ${self:custom.policies.putItemProgressTable}
+
   ProgressIdTable:
     Type: AWS::DynamoDB::Table
     Properties:
