@@ -106,6 +106,8 @@
             setTimeout(() => {
               startPolling(url, code)
             }, pollingInterval)
+          } else {
+            appendOutput('DONE!')
           }
         })
         .catch((err) => {
