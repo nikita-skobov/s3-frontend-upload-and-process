@@ -10,9 +10,8 @@ function Errors() {
       }
       return null
     },
-    getIndex: (err) => {
-      return errors.indexOf(err)
-    },
+
+    getIndex: err => errors.indexOf(err),
   }
 
   return retObj

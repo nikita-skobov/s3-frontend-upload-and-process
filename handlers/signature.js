@@ -2,6 +2,8 @@
 'use strict';
 
 const uuidv4 = require('uuid/v4')
+
+// eslint-disable-next-line
 const AWS = require('aws-sdk')
 
 const Status = require('../models/status')
@@ -23,17 +25,17 @@ module.exports.handler = async (event, context) => {
     // USE one of the following for CORS. either a specific domain, or all domains
     'Access-Control-Allow-Origin': '*', // Required for CORS support to work
     // 'Access-Control-Allow-Origin': `https://${process.env.DOMAIN}.com`, // Required for CORS support to work
-    
+
     // USE the following if you have a private API that needs an authorization header
-    // 'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
-    
+    // 'Access-Control-Allow-Credentials': true, // Required for authorization headers with HTTPS
+
     // This function generates a unique signature, so you probably don't need caching...
     // 'Cache-Control': 'max-age=2', // by default dont cache for long
   }
 
   try {
     // TODO: verify the request either using a JWT, cookie, body, etc
-    
+
     const code = uuidv4()
     const currentTimeInSeconds = Math.floor(Date.now() / 1000)
     const expiresIn = 60 * 1 // 1 minute

@@ -13,9 +13,8 @@ function Status() {
       }
       return null
     },
-    getIndex: (step) => {
-      return steps.indexOf(step)
-    },
+
+    getIndex: step => steps.indexOf(step),
   }
 
   return retObj

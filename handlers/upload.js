@@ -1,6 +1,7 @@
 // eslint-disable-next-line
 'use strict';
 
+// eslint-disable-next-line
 const AWS = require('aws-sdk')
 
 const Status = require('../models/status')
@@ -31,7 +32,7 @@ function updateStatus(key, desiredStatus) {
         ExpressionAttributeValues: {
           ':x': 1, // increment by 1
           // only increment status if it is currently at the previous step
-          // this avoids incrementing twice in a case where this function gets triggered multiple times
+          // this avoids incrementing twice in case this function is triggered multiple times
           ':y': indexOfPreviousStatus,
         },
       }).promise()
@@ -53,7 +54,7 @@ function updateStatus(key, desiredStatus) {
 function processObject(obj) {
   // simulate processing the object by waiting a few seconds
   // in a real application this might be image resizing
-  // video rendering/transcoding, as well as other time consuming tasks 
+  // video rendering/transcoding, as well as other time consuming tasks
   return new Promise((res) => {
     setTimeout(() => {
       res(obj)
@@ -78,11 +79,10 @@ module.exports.handler = async (event, context) => {
   }
 
   console.log(event.Records[0])
-  const { eventTime } = event.Records[0]
-  const { sourceIPAddress } = event.Records[0].requestParameters
+  // const { eventTime } = event.Records[0]
+  // const { sourceIPAddress } = event.Records[0].requestParameters
   const { name } = event.Records[0].s3.bucket
   const { key, size } = event.Records[0].s3.object
-  const metaSize = size.toString(10)
 
   if (size > process.env.MAX_UPLOAD_SIZE || size === 0) {
     // prevent further processing if the object is larger than the limit (or 0)
@@ -112,7 +112,7 @@ module.exports.handler = async (event, context) => {
   const s3Obj = await s3.getObject({
     Bucket: name,
     Key: key,
-  }).promise()  
+  }).promise()
   console.log(s3Obj)
 
   // TODO: add code to actually process the data
