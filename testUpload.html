@@ -5,13 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
+  <style>
+    #seperate-rows > * {
+      display: block;
+    }
+    code {
+      font-weight: bold;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-  <input id="signature-url" type="text">
-  <button id="submit">Submit</button>
+  <div id="seperate-rows">
+    <h3>This is a test webpage to test the frontend upload, and progress polling of the serverless configuration</h3>
+    <h3>Simply enter your API url with your stage, and click submit. The API url should not have a trailing slash. Here is an example:</h3>
+    <code>https://q8dswa3fe9.execute-api.us-east-2.amazonaws.com/staging</code>
+    <h3>This script will simply upload a javascript object as application/json.</h3>
+    <input id="api-url" type="text">
+    <br>
+    <button id="submit">Submit</button>
+    <br>
+    <br>
+    <h2>Output: </h2>
+    <ol id="ordered-list">
+
+    </ol>
+  </div>
   <script>
-    const signatureUrl = document.getElementById('signature-url')
+    const apiUrl = document.getElementById('api-url')
     const submitButton = document.getElementById('submit')
+    const orderedList = document.getElementById('ordered-list')
+
+    const issueSignaturePath = 'issue/signature/'
+    const pollPath = 'poll/'
+    
+    const pollingInterval = 1000 // 1 second
+
     // just some random object to use as the data
     const data = {
       jeff: 'hello',
@@ -31,41 +60,84 @@
       random: Math.random(),
     }
 
-    function uploadSuccess(xhr) {
+    function appendOutput(text) {
+      const listItem = document.createElement('li')
+      listItem.textContent = text
+      orderedList.appendChild(listItem)
+    }
+
+    function uploadSuccess(xhr, code) {
       console.log('Successfully uploaded data')
+      appendOutput('Successfully uploaded to S3')
+      startPolling(apiUrl.value, code)
     }
 
     function uploadError(xhr) {
+      appendOutput('upload to S3 failed')
       console.error('Error uploading data: ')
       console.error(xhr)
     }
     
-    function startUpload(url, successCallback, errorCallback) {
+    function startUpload(url, code, successCallback, errorCallback) {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
       const xhr = new XMLHttpRequest()
       xhr.open('PUT', url, true)
 
       xhr.onload = () => {
         if (xhr.readyState === 4 && xhr.status === 200) {
-          successCallback(xhr)
+          successCallback(xhr, code)
         } else {
           errorCallback(xhr)
         }
       }
 
+      appendOutput('Starting upload to S3')
       xhr.send(blob)
     }
 
-    function requestSignature() {
-      const url = signatureUrl.value
-
-      fetch(url)
+    function startPolling(url, code) {
+      console.log('starting to poll \n')
+      fetch(`${url}/${pollPath}?code=${code}`)
         .then(resp => resp.json())
         .then((data) => {
-          if (data.error) console.error(data.error)
-          else startUpload(data.url, uploadSuccess, uploadError)
+          console.log(data)
+          appendOutput(`POLLING STATUS: ${data.status}`)
+          if (data.status !== 'Successfully entered data into database') {
+            setTimeout(() => {
+              startPolling(url, code)
+            }, pollingInterval)
+          }
         })
-        .catch(err => console.error(err))
+        .catch((err) => {
+          appendOutput(`polling error: ${err}`)
+          console.error(err)
+        })
+    }
+
+    function requestSignature() {
+      const url = apiUrl.value
+      appendOutput('Starting signature request')
+
+      fetch(`${url}/${issueSignaturePath}`)
+        .then(resp => resp.json())
+        .then((data) => {
+
+          appendOutput('Received signature response')
+
+          if (data.error) {
+            console.error(data.error)
+            appendOutput(`error generating signature: ${data.error}`)
+          } else {
+            appendOutput('Successfuly received signature:')
+            appendOutput(`signed url: ${data.url}`)
+            appendOutput(`upload code: ${data.code}`)
+            startUpload(data.url, data.code, uploadSuccess, uploadError)
+          }
+        })
+        .catch((err) => {
+          appendOutput(`Failed to generate signature: ${err}`)
+          console.error(err)
+        })
     }
 
     submitButton.addEventListener('click', requestSignature)
