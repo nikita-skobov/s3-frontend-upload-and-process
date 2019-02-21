@@ -50,6 +50,26 @@ function updateStatus(key, desiredStatus) {
   })
 }
 
+function processObject(obj) {
+  // simulate processing the object by waiting a few seconds
+  // in a real application this might be image resizing
+  // video rendering/transcoding, as well as other time consuming tasks 
+  return new Promise((res) => {
+    setTimeout(() => {
+      res(obj)
+    }, 4000)
+  })
+}
+
+function enterSomethingIntoDatabase(obj) {
+  // simulate entering data into a database
+  // most database requests are fairly quick, so the timeout will
+  // be shorter for this than processing the object
+  return new Promise((res) => {
+    setTimeout(res, 1000)
+  })
+}
+
 module.exports.handler = async (event, context) => {
   const errs = Errors()
 
@@ -88,26 +108,26 @@ module.exports.handler = async (event, context) => {
     return SUCCESS
   }
 
-  // otherwise, the upload is successful, so we update the progress table
-  await updateStatus(key, 'Successfully uploaded data')
-
+  // retrieve the object that the user uploaded
   const s3Obj = await s3.getObject({
     Bucket: name,
     Key: key,
   }).promise()  
   console.log(s3Obj)
 
-  // add code to process the object
+  // TODO: add code to actually process the data
+  const newObject = await processObject(s3Obj)
   await updateStatus(key, 'Successfully processed data')
 
   await s3.putObject({
-    Body: s3Obj.Body,
+    Body: newObject.Body,
     Bucket: process.env.OUTPUT_BUCKET,
     Key: `modifiedobject_${key}`,
   }).promise()
 
   // here we dont actually enter anything into a database, but in a real application
   // you might make a table entry based on your application logic.
+  await enterSomethingIntoDatabase(newObject)
   await updateStatus(key, 'Successfully entered data into database')
 
   return SUCCESS
