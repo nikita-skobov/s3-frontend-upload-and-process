@@ -12,6 +12,7 @@ package:
     # for the ones you want
     - node_modules/**
     - '!node_modules/has/**'
+    - '!node_modules/uuid/**'
 custom:
   # account: ${opt:account} # your 12 digit AWS account number
   timeout: ${opt:timeout, "30"}
@@ -23,28 +24,20 @@ custom:
   maxUploadSize: ${opt:maxUploadSize, "30000000"} # defaults to 30MB
   s3UploadedRoleName: "${self:service}-${self:provider.stage}-s3Uploaded-role"
   s3SignatureRoleName: "${self:service}-${self:provider.stage}-s3Signature-role"
+  pollingRoleName: "${self:service}-${self:provider.stage}-polling-role"
   uploadedHandler: ${opt:uploadHandler, "handlers/upload.handler"}
   signatureHandler: ${opt:signatureHandler, "handlers/signature.handler"}
+  pollingHandler: ${opt:pollingHandler, "handlers/polling.handler"}
+  pollingPath: ${opt:pollingPath, "/poll"}
   signaturePath: ${opt:signaturePath, "/issue/signature"}
   urlExpires: ${opt:urlExpires, "120000"} # defaults to 2 minutes
+  dynamoTableName: ${opt:dynamoTableName, "${self:service}-${self:provider.stage}-progress-table"}
+  dynamoPartitionKeyName: ${opt:dynamoPartitionKeyName, "pk"}
+  dynamoPartitionKeyType: ${opt:dynamoPartitionKeyType, "S"}
 
-  policies:
-    # use this policy within your lambda function role(s) to enable cloudwatch logging
-    logAll: ${file(./serverlessConfig/policies.yml):logAll}
-    # use this policy within your lambda function role(s) to enable DLQ publishing
-    snsPublish: ${file(./serverlessConfig/policies.yml):snsPublish}
-    getObjectUploadBucket: ${file(./serverlessConfig/policies.yml):getObjectUploadBucket}
-    putObjectOutputBucket: ${file(./serverlessConfig/policies.yml):putObjectOutputBucket}
-    putObjectUploadBucket: ${file(./serverlessConfig/policies.yml):putObjectUploadBucket}
+  policies: ${file(./serverlessConfig/policies.yml):policies}
 
-functions:
-  s3SignatureGenerator: ${file(./serverlessConfig/functions.yml):s3SignatureGenerator}
-  s3Uploaded: ${file(./serverlessConfig/functions.yml):s3Uploaded}
+functions: ${file(./serverlessConfig/functions.yml):functions}
 
 resources:
-  Resources:
-    S3BucketUploadbucket: ${file(./serverlessConfig/resources.yml):S3BucketUploadbucket}
-    S3UploadedLambdaPermissionUploadbucketS3: ${file(./serverlessConfig/resources.yml):S3UploadedLambdaPermissionUploadbucketS3}
-    s3OutputBucket: ${file(./serverlessConfig/resources.yml):s3OutputBucket}
-    s3UploadedRole: ${file(./serverlessConfig/resources.yml):s3UploadedRole}
-    s3SignatureRole: ${file(./serverlessConfig/resources.yml):s3SignatureRole}
+  Resources: ${file(./serverlessConfig/resources.yml):Resources}

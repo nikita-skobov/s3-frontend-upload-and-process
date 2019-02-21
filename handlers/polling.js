@@ -1,23 +1,19 @@
 // eslint-disable-next-line
 'use strict';
 
-const uuidv4 = require('uuid/v4')
 const AWS = require('aws-sdk')
 
 const Status = require('../models/status')
-
-const s3 = new AWS.S3({
-  region: process.env.REGION,
-  signatureVersion: 'v4',
-})
 
 const ddb = new AWS.DynamoDB.DocumentClient({
   region: process.env.REGION,
 })
 
+const has = Object.prototype.hasOwnProperty
+
 module.exports.handler = async (event, context) => {
   let statusCode = 500
-  let body = { error: 'Unable to issue signature' }
+  let body = { error: 'Unable to poll' }
   let headers = {
     'Content-Type': 'application/json',
     // USE one of the following for CORS. either a specific domain, or all domains
@@ -33,32 +29,39 @@ module.exports.handler = async (event, context) => {
 
   try {
     // TODO: verify the request either using a JWT, cookie, body, etc
-    
-    const code = uuidv4()
-    const currentTimeInSeconds = Math.floor(Date.now() / 1000)
-    const expiresIn = 60 * 1 // 1 minute
-    const codeExpiration = currentTimeInSeconds + expiresIn
-
-    const url = s3.getSignedUrl('putObject', {
-      Bucket: process.env.UPLOAD_BUCKET,
-      Expires: process.env.URL_EXPIRE_SECONDS,
-      // TODO: change this to something specific to your application
-      Key: code,
-    })
 
     const stats = Status()
 
-    await ddb.put({
+    const code = event.queryStringParameters.code
+
+    if (!code) {
+      const noCodeErr = new Error('no code')
+      noCodeErr.body = {
+        error: 'No code provided',
+      }
+      noCodeErr.statusCode = 400
+      throw noCodeErr
+    }
+
+    const data = await ddb.get({
       TableName: process.env.TABLE_NAME,
-      Item: {
+      Key: {
         [process.env.PARTITION_KEY]: code,
-        codeExpiration,
-        statusCode: stats.getIndex('Successfully created upload signature'),
-        errorCode: -1,
       },
     }).promise()
 
-    body = { url, code }
+    if (!has.call(data.Item, 'statusCode')) {
+      const invalidCodeErr = new Error('invalid code')
+      invalidCodeErr.body = {
+        error: `The code: ${code} does not exist`,
+      }
+      invalidCodeErr.statusCode = 400
+      throw invalidCodeErr
+    }
+
+    const sc = data.Item.statusCode
+
+    body = { status: stats.getStep(sc) }
     statusCode = 200
   } catch (e) {
     console.log(e)
