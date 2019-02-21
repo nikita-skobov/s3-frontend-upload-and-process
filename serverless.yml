@@ -8,12 +8,14 @@ package:
   exclude:
     - LICENSE
     - README.md
+    - testUpload.html
+    - .eslintrc.js
+    - serverlessConfig/**
     # the following is an example of how to exclude all node_modules except
     # for the ones you want
     - node_modules/**
     - '!node_modules/uuid/**'
 custom:
-  # account: ${opt:account} # your 12 digit AWS account number
   timeout: ${opt:timeout, "30"}
   memorySize: ${opt:memorySize, "2560"}
   uploadPrefix: ${opt:uploadPrefix, "upload"}
