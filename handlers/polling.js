@@ -23,9 +23,6 @@ module.exports.handler = async (event, context) => {
 
     // USE the following if you have a private API that needs an authorization header
     // 'Access-Control-Allow-Credentials': true, // Required for authorization headers with HTTPS
-
-    // This function generates a unique signature, so you probably don't need caching...
-    // 'Cache-Control': 'max-age=2', // by default dont cache for long
   }
 
   try {

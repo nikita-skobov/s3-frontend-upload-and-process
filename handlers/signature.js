@@ -30,7 +30,7 @@ module.exports.handler = async (event, context) => {
     // 'Access-Control-Allow-Credentials': true, // Required for authorization headers with HTTPS
 
     // This function generates a unique signature, so you probably don't need caching...
-    // 'Cache-Control': 'max-age=2', // by default dont cache for long
+    // 'Cache-Control': 'max-age=2',
   }
 
   try {

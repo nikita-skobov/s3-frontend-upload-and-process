@@ -28,7 +28,7 @@ function updateStatus(key, desiredStatus) {
           [process.env.PARTITION_KEY]: key,
         },
         UpdateExpression: 'set statusCode = statusCode + :x', // increment by attrb #a by :x
-        ConditionExpression: 'statusCode = :y', // only increment if status = the upload signature status
+        ConditionExpression: 'statusCode = :y',
         ExpressionAttributeValues: {
           ':x': 1, // increment by 1
           // only increment status if it is currently at the previous step
