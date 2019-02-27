@@ -1,4 +1,4 @@
-# s3-frontend-upload-and-process
+# s3-upload-progress-configuration
 
 ## About
 
@@ -29,8 +29,8 @@ Note: the serverless framework is not listed as a dependency because it is meant
 This repository is already set up, and ready to deploy with default variable names, and handler functions.
 
 ```sh
-git clone https://github.com/nikita-skobov/s3-frontend-upload-and-process.git
-cd s3-frontend-upload-and-process
+git clone https://github.com/nikita-skobov/s3-upload-progress-configuration.git
+cd s3-upload-progress-configuration
 npm install
 sls deploy # this assumes your credentials are stored in a way that serverless knows where to find them
 ```
